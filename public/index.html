@@ -39,6 +39,7 @@
       const name = document.getElementById("usernameInput").value.trim();
       if (!name) return;
       socket.emit('register', name);
+      alert("joined")
     }
 
     socket.on('connect', () => {
