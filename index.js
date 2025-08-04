@@ -1,35 +1,39 @@
 const express = require('express');
 const http = require('http');
-const WebSocket = require('ws');
+const { Server } = require('socket.io');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const io = new Server(server);
 
-// Serve static files from 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// WebSocket logic
-wss.on('connection', (ws) => {
-  console.log("New user connected.");
-  ws.send("👋 Welcome to the WebSocket Chat!");
+const users = {};
 
-  ws.on('message', (message) => {
-    // Broadcast to all clients except the sender
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN && client !== ws) {
-        client.send(`👤 Stranger: ${message}`);
-      }
+io.on('connection', (socket) => {
+  console.log(`🟢 New connection: ${socket.id}`);
+
+  socket.on('register', (username) => {
+    users[socket.id] = username;
+    io.emit('users', users);
+  });
+
+  socket.on('private_message', ({ to, message }) => {
+    io.to(to).emit('private_message', {
+      from: socket.id,
+      username: users[socket.id],
+      message
     });
   });
 
-  ws.on('close', () => {
-    console.log("User disconnected.");
+  socket.on('disconnect', () => {
+    console.log(`🔴 Disconnected: ${socket.id}`);
+    delete users[socket.id];
+    io.emit('users', users);
   });
 });
 
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+server.listen(3000, () => {
+  console.log('✅ Server running on http://localhost:3000');
 });

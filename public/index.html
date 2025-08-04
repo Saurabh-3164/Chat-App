@@ -2,69 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>WebSocket Chat</title>
+  <title>Private Chat</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 30px; }
-    #chatLog {
-      background: white;
-      border: 1px solid #ccc;
-      padding: 10px;
-      height: 300px;
-      overflow-y: scroll;
-      margin-bottom: 10px;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-    }
-    input {
-      width: 70%;
-    }
+    body { font-family: Arial; margin: 0; padding: 20px; background: #f9f9f9; }
+    #onlineUsers { list-style: none; padding: 0; max-height: 150px; overflow-y: auto; }
+    #chatBox, #messageInput, #sendBtn { display: none; }
+    .user-item { cursor: pointer; padding: 5px; border-bottom: 1px solid #ccc; }
+    .user-item:hover { background: #eee; }
   </style>
 </head>
 <body>
+  <h2>👥 Private Chat Room</h2>
+  <div>
+    <label>Enter your name:</label>
+    <input id="usernameInput" />
+    <button onclick="registerUser()">Join Chat</button>
+  </div>
 
-  <h2>🔌 WebSocket Chat</h2>
-  <div id="chatLog"></div>
-  <input type="text" id="messageInput" placeholder="Type a message..." />
-  <button onclick="sendMessage()">Send</button>
+  <h3>🟢 Online Users</h3>
+  <ul id="onlineUsers"></ul>
 
+  <div id="chatBox">
+    <h3>Chat with <span id="chatWith"></span></h3>
+    <div id="chatLog" style="border:1px solid #ccc; height:200px; overflow-y:scroll; background:white; padding:10px;"></div>
+    <input id="messageInput" placeholder="Type message..." />
+    <button id="sendBtn" onclick="sendMessage()">Send</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
   <script>
-    const chatLog = document.getElementById("chatLog");
-    const input = document.getElementById("messageInput");
+    const socket = io();
+    let myId = '';
+    let currentChatId = '';
 
-    const socket = new WebSocket(
-      location.protocol === 'https:' ? `wss://${location.host}` : `ws://${location.host}`
-    );
-
-    socket.onopen = () => {
-      console.log("Connected to WebSocket server");
-    };
-
-    socket.onmessage = (event) => {
-      const p = document.createElement("p");
-      p.textContent = event.data;
-      chatLog.appendChild(p);
-      chatLog.scrollTop = chatLog.scrollHeight;
-    };
-
-    function sendMessage() {
-      const msg = input.value.trim();
-      if (msg && socket.readyState === WebSocket.OPEN) {
-        socket.send(msg);
-
-        const p = document.createElement("p");
-        p.innerHTML = `<strong>You:</strong> ${msg}`;
-        chatLog.appendChild(p);
-        chatLog.scrollTop = chatLog.scrollHeight;
-
-        input.value = '';
-      }
+    function registerUser() {
+      const name = document.getElementById("usernameInput").value.trim();
+      if (!name) return;
+      socket.emit('register', name);
     }
 
-    input.addEventListener("keyup", (e) => {
-      if (e.key === "Enter") sendMessage();
+    socket.on('connect', () => {
+      myId = socket.id;
     });
+
+    socket.on('users', (users) => {
+      const list = document.getElementById("onlineUsers");
+      list.innerHTML = '';
+      for (const [id, name] of Object.entries(users)) {
+        if (id === socket.id) continue;
+        const li = document.createElement("li");
+        li.className = "user-item";
+        li.textContent = name;
+        li.onclick = () => startChat(id, name);
+        list.appendChild(li);
+      }
+    });
+
+    function startChat(id, name) {
+      currentChatId = id;
+      document.getElementById("chatBox").style.display = 'block';
+      document.getElementById("messageInput").style.display = 'inline';
+      document.getElementById("sendBtn").style.display = 'inline';
+      document.getElementById("chatWith").textContent = name;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      socket.emit("private_message", { to: currentChatId, message: msg });
+      appendMessage(`You: ${msg}`);
+      input.value = '';
+    }
+
+    socket.on("private_message", ({ from, username, message }) => {
+      appendMessage(`${username}: ${message}`);
+    });
+
+    function appendMessage(msg) {
+      const chatLog = document.getElementById("chatLog");
+      const p = document.createElement("p");
+      p.textContent = msg;
+      chatLog.appendChild(p);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
   </script>
 </body>
 </html>
