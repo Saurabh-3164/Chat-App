@@ -1,31 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Simple WebSocket Chat</title>
+  <meta charset="UTF-8" />
+  <title>WebSocket Chat</title>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f2f2f2; }
-    #chatLog { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; background: white; }
-    input { padding: 8px; width: 70%; }
-    button { padding: 8px; }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 30px; }
+    #chatLog {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: scroll;
+      margin-bottom: 10px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+    }
+    input {
+      width: 70%;
+    }
   </style>
 </head>
 <body>
 
-  <h2>WebSocket Chat</h2>
+  <h2>🔌 WebSocket Chat</h2>
   <div id="chatLog"></div>
-  <br />
-  <input type="text" id="messageInput" placeholder="Type your message..." />
+  <input type="text" id="messageInput" placeholder="Type a message..." />
   <button onclick="sendMessage()">Send</button>
 
   <script>
-    // Connect to the WebSocket server
-    const socket = new WebSocket("ws://localhost:8080");
-
     const chatLog = document.getElementById("chatLog");
     const input = document.getElementById("messageInput");
 
-    // When a message is received from server
+    const socket = new WebSocket(
+      location.protocol === 'https:' ? `wss://${location.host}` : `ws://${location.host}`
+    );
+
+    socket.onopen = () => {
+      console.log("Connected to WebSocket server");
+    };
+
     socket.onmessage = (event) => {
       const p = document.createElement("p");
       p.textContent = event.data;
@@ -33,24 +48,23 @@
       chatLog.scrollTop = chatLog.scrollHeight;
     };
 
-    // When the send button is clicked
     function sendMessage() {
       const msg = input.value.trim();
-      if (msg) {
+      if (msg && socket.readyState === WebSocket.OPEN) {
         socket.send(msg);
+
         const p = document.createElement("p");
         p.innerHTML = `<strong>You:</strong> ${msg}`;
         chatLog.appendChild(p);
         chatLog.scrollTop = chatLog.scrollHeight;
+
         input.value = '';
       }
     }
 
-    // Allow Enter key to send message
     input.addEventListener("keyup", (e) => {
       if (e.key === "Enter") sendMessage();
     });
   </script>
-
 </body>
 </html>
