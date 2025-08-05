@@ -2,92 +2,424 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Private Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Private Chat App</title>
   <style>
-    body { font-family: Arial; margin: 0; padding: 20px; background: #f9f9f9; }
-    #onlineUsers { list-style: none; padding: 0; max-height: 150px; overflow-y: auto; }
-    #chatBox, #messageInput, #sendBtn { display: none; }
-    .user-item { cursor: pointer; padding: 5px; border-bottom: 1px solid #ccc; }
-    .user-item:hover { background: #eee; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f6f9;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    #authPage {
+      max-width: 400px;
+      margin: auto;
+      padding: 40px 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      width: auto;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    #chatPage {
+      flex: 1;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sidebar h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .user-info {
+      font-weight: bold;
+    }
+
+    .logout-btn {
+      background: #e74c3c;
+      border: none;
+      padding: 10px;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      max-height: 70vh;
+    }
+
+    .user {
+      background: #34495e;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .user:hover,
+    .user.active {
+      background: #1abc9c;
+    }
+
+    .main-panel {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+.message {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  margin: 8px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.from-me {
+  background: #dcf8c6;
+  align-self: flex-end;
+  border-bottom-right-radius: 0;
+}
+
+.from-other {
+  background: #ffffff;
+  align-self: flex-start;
+  border-bottom-left-radius: 0;
+}
+.message-bar {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.message-bar input {
+  flex: 1;
+  font-size: 16px;
+  padding: 14px 12px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+}
+
+.message-bar button {
+  padding: 14px 20px;
+  font-size: 16px;
+  border-radius: 20px;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: #e5ddd5;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+  .timestamp {
+      display: block;
+      font-size: 10px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .main-panel {
+    padding: 10px;
+  }
+
+  .message-bar {
+    flex-direction: column;
+  }
+
+  .message-bar input,
+  .message-bar button,
+  #recipientSelect {
+    width: 100%;
+  }
+
+  #recipientSelect {
+    margin-bottom: 10px;
+  }
+}
+
+
+  
+ 
   </style>
 </head>
 <body>
-  <h2>👥 Private Chat Room</h2>
-  <div>
-    <label>Enter your name:</label>
-    <input id="usernameInput" />
-    <button onclick="registerUser()">Join Chat</button>
+
+<div id="authPage">
+  <h2>Register</h2>
+  <input type="text" id="regName" placeholder="Name" />
+  <input type="email" id="regEmail" placeholder="Email" />
+  <input type="password" id="regPassword" placeholder="Password" />
+  <button onclick="register()">Register</button>
+
+  <hr/>
+
+  <h2>Login</h2>
+  <input type="email" id="loginEmail" placeholder="Email" />
+  <input type="password" id="loginPassword" placeholder="Password" />
+  <button onclick="login()">Login</button>
+</div>
+
+<div class="container" id="chatPage" style="display:none;">
+  <div class="sidebar">
+    <div>
+      <h2>Welcome</h2>
+      <div class="user-info" id="usernameDisplay"></div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    <div>
+      <h2>Online Users</h2>
+      <div class="user-list" id="usersList"></div>
+    </div>
   </div>
 
-  <h3>🟢 Online Users</h3>
-  <ul id="onlineUsers"></ul>
-
-  <div id="chatBox">
-    <h3>Chat with <span id="chatWith"></span></h3>
-    <div id="chatLog" style="border:1px solid #ccc; height:200px; overflow-y:scroll; background:white; padding:10px;"></div>
-    <input id="messageInput" placeholder="Type message..." />
-    <button id="sendBtn" onclick="sendMessage()">Send</button>
+  <div class="main-panel">
+    <div class="messages" id="messages"></div>
+    <select id="recipientSelect" onchange="onRecipientChange()">
+      <option value="">Select a user</option>
+    </select>
+    <div class="message-bar">
+      <input type="text" id="messageInput" placeholder="Type your message..." oninput="onMessageChange()" />
+      <button onclick="sendMessage()" id="sendBtn" disabled>Send</button>
+    </div>
   </div>
+</div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    let myId = '';
-    let currentChatId = '';
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  const socket = io("http://localhost:3000");
+  let currentUser = null;
+  let currentChatWith = null;
 
-    function registerUser() {
-      const name = document.getElementById("usernameInput").value.trim();
-      if (!name) return;
-      socket.emit('register', name);
-      alert("joined")
-    }
+  async function register() {
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
 
-    socket.on('connect', () => {
-      myId = socket.id;
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
     });
 
-    socket.on('users', (users) => {
-      const list = document.getElementById("onlineUsers");
-      list.innerHTML = '';
-      for (const [id, name] of Object.entries(users)) {
-        if (id === socket.id) continue;
-        const li = document.createElement("li");
-        li.className = "user-item";
-        li.textContent = name;
-        li.onclick = () => startChat(id, name);
-        list.appendChild(li);
+    const data = await res.json();
+    alert(data.message || data.error);
+  }
+
+  async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    if (data.user) {
+      currentUser = data.user;
+      document.getElementById('usernameDisplay').innerText = currentUser.name;
+      document.getElementById('authPage').style.display = 'none';
+      document.getElementById('chatPage').style.display = 'flex';
+      socket.emit('user_connected', currentUser);
+    } else {
+      alert(data.error);
+    }
+  }
+
+  function logout() {
+    socket.disconnect();
+    location.reload();
+  }
+
+  function onRecipientChange() {
+    const selected = document.getElementById('recipientSelect').value;
+    currentChatWith = selected;
+    loadChat(selected);
+    highlightSelectedUser();
+    onMessageChange();
+  }
+
+  function onMessageChange() {
+    const message = document.getElementById('messageInput').value;
+    document.getElementById('sendBtn').disabled = !currentChatWith || !message.trim();
+  }
+
+  socket.on('connect', () => {
+    console.log("Socket connected:", socket.id);
+  });
+
+  socket.on('users', (users) => {
+    const usersList = document.getElementById('usersList');
+    const recipientSelect = document.getElementById('recipientSelect');
+    usersList.innerHTML = '';
+    recipientSelect.innerHTML = '<option value="">Select a user</option>';
+
+    for (let email in users) {
+      if (users[email].email !== currentUser?.email && users[email].online) {
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user';
+        userDiv.innerText = users[email].name;
+        userDiv.onclick = () => {
+          currentChatWith = email;
+          document.getElementById('recipientSelect').value = email;
+          loadChat(email);
+          highlightSelectedUser();
+        };
+        userDiv.dataset.email = email;
+        usersList.appendChild(userDiv);
+
+        const option = document.createElement('option');
+        option.value = email;
+        option.innerText = users[email].name;
+        recipientSelect.appendChild(option);
+      }
+    }
+    highlightSelectedUser();
+  });
+
+  function highlightSelectedUser() {
+    const userDivs = document.querySelectorAll('.user');
+    userDivs.forEach(div => {
+      div.classList.remove('active');
+      if (div.dataset.email === currentChatWith) {
+        div.classList.add('active');
       }
     });
+  }
 
-    function startChat(id, name) {
-      currentChatId = id;
-      document.getElementById("chatBox").style.display = 'block';
-      document.getElementById("messageInput").style.display = 'inline';
-      document.getElementById("sendBtn").style.display = 'inline';
-      document.getElementById("chatWith").textContent = name;
-    }
-
-    function sendMessage() {
-      const input = document.getElementById("messageInput");
-      const msg = input.value.trim();
-      if (!msg) return;
-
-      socket.emit("private_message", { to: currentChatId, message: msg });
-      appendMessage(`You: ${msg}`);
-      input.value = '';
-    }
-
-    socket.on("private_message", ({ from, username, message }) => {
-      appendMessage(`${username}: ${message}`);
+  async function loadChat(email) {
+    const res = await fetch(`/api/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: currentUser.email, to: email })
     });
 
-    function appendMessage(msg) {
-      const chatLog = document.getElementById("chatLog");
-      const p = document.createElement("p");
-      p.textContent = msg;
-      chatLog.appendChild(p);
-      chatLog.scrollTop = chatLog.scrollHeight;
+    const data = await res.json();
+    const msgBox = document.getElementById('messages');
+    msgBox.innerHTML = '';
+    data.messages.forEach(msg => {
+      const fromSelf = msg.from === currentUser.email;
+      appendMessage(msg.content, fromSelf, msg.timestamp);
+    });
+  }
+
+  function sendMessage() {
+    const to = document.getElementById('recipientSelect').value;
+    const message = document.getElementById('messageInput').value;
+    if (!to || !message) return;
+
+    socket.emit('private_message', {
+      from: currentUser.email,
+      to,
+      message
+    });
+
+    appendMessage(message, true, new Date().toISOString());
+    document.getElementById('messageInput').value = '';
+    onMessageChange();
+  }
+
+  socket.on('private_message', ({ from, username, message }) => {
+    if (!currentChatWith) {
+      currentChatWith = from;
+      document.getElementById('recipientSelect').value = from;
+      loadChat(from);
     }
-  </script>
+
+    if (from === currentChatWith) {
+      appendMessage(message, false, new Date().toISOString());
+    } else {
+      console.log(`💬 New message from ${username}`);
+    }
+  });
+
+ function appendMessage(msg, fromSelf = false, timestamp = '') {
+  const msgBox = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'message ' + (fromSelf ? 'from-me' : 'from-other');
+
+  const msgContent = document.createElement('div');
+  msgContent.innerText = msg;
+
+  const time = document.createElement('div');
+  time.className = 'timestamp';
+  const date = new Date(timestamp);
+  time.innerText = `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+  div.appendChild(msgContent);
+  div.appendChild(time);
+
+  msgBox.appendChild(div);
+  msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+</script>
 </body>
 </html>
