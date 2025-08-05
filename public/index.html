@@ -252,7 +252,9 @@
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-  const socket = io("http://localhost:3000");
+  // const socket = io("http://localhost:3000");
+  const socket = io(); // Automatically connects to the same domain as the frontend
+
   let currentUser = null;
   let currentChatWith = null;
 
