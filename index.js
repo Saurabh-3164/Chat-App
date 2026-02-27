@@ -20,8 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const users = {};
 
 mongoose.connect('mongodb+srv://miltcam80:KsqnLQWboHFiUDB3@cluster0.xvz6xtg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+  
 }).then(() => {
   console.log('✅ Connected to MongoDB');
 
